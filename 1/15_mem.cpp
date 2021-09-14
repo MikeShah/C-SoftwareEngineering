@@ -2,7 +2,7 @@
 #include <iostream>
 
 // Pass x 'by reference'
-void setValue(int &a){
+void setValue(int& a){
     // Whatever is in the memory at 
     // address of a(the parameter sent in)
     // change that value to 9999
