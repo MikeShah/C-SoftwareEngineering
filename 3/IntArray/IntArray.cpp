@@ -11,8 +11,11 @@ public:
     // Destructor: ~IntArray()
 
     // Copy Constructor: IntArray(const IntArray& rhs_copy)
+    // -  Don't copy yourself! 
 
     // Copy Assignment Constructor: IntArray& operator=(const IntArray& rhs_copy)
+    // -  Don't copy yourself! 
+    // -  Remember what we are returning: *this (why?)
 
 };
 
