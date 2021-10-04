@@ -1,36 +1,29 @@
 #include <iostream>
-class T{
+class Game{
     public:
-        static int counter;
-        static void test(){
-            counter++;
-            std::cout << "how many T's are there? " << counter << std::endl;
+        static int points;
+        static void addPoints(){
+            points++;
+            std::cout << "points " << points << std::endl;
         }
 
-    T(){
-        test();
+    Game(){
+        addPoints();
     }
 
 };
 
-int T::counter = 0;
-
-void foo(){
-    static int i=0;
-    i++;
-
-    std::cout << "i is: " << i << std::endl;
-}
+int Game::points = 70;
 
 int main(){
-
-    T::test();
-    T::test();
-    T::test();
-    T::test();
-    T::test();
-    T::test();
-
-
+    Game game1;
+    Game game2;
+    Game game3;
+    Game game4;
+    Game game5;
+    std::cout << Game::points<< std::endl;
     return 0;
 }
+
+
+
