@@ -17,7 +17,9 @@ set(CMAKE_CXX_STANDARD 17)
 # that we are compiling on.
 # We also want to specify all of the source files that we will be using.
 add_executable(myApplication
-               src/main.cpp)    # Include all the .cpp files
+               src/main.cpp
+               # src/another_file.cpp
+)              # Include all the .cpp files here one at a time.
 
 
 # If you want you can manually check what platform you are on with
