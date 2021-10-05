@@ -61,11 +61,19 @@ else()
     endif()
 endif()
 
+# Where to find our header files
+include_directories("./_deps/sfml-src/include")
+
+# Tell SFML which directory to find our libraries
+link_directories("./_deps/sfml-build/lib/")
+
+# Which of the directories (in the above folder) to actually link
 target_link_libraries(myApplication 
                       PRIVATE
                         sfml-window
                         sfml-system
                         sfml-graphics
 )
+
 
 
