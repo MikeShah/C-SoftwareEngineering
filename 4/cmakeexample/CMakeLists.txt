@@ -61,7 +61,6 @@ else()
         FetchContent_Populate(sfml)
         add_subdirectory(${sfml_SOURCE_DIR} ${sfml_BINARY_DIR})
         # Now try to link the libraries
-        target_link_libraries(myApplication PRIVATE ${LIBRARY_SFML})
     endif()
 endif()
 
