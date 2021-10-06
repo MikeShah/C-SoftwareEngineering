@@ -22,22 +22,6 @@ add_executable(myApplication
 )              # Include all the .cpp files here one at a time.
 
 
-# If you want you can manually check what platform you are on with
-message("======================") 
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    message("Building on windows") 
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message("Building on Linux") 
-    message("Note: For SFML, Linux may require you to download many dependencies from scratch")
-    message("e.g., sudo apt-get install -y libfreetype6-dev")
-    message("      sudo apt-get install libopenal-dev")
-    message("      sudo apt-get install -y libvorbis-dev")
-    message("      sudo apt-get install -y libflac-dev")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    message("Building on Mac") 
-endif()
-message("======================") 
-
 # We can pass additional compilation flags in C++
 # (i.e., things handled by the preprocessor)
 target_compile_definitions(myApplication PRIVATE SOME_DEFINITION)
@@ -45,7 +29,7 @@ target_compile_definitions(myApplication PRIVATE SOME_DEFINITION)
 target_compile_options(myApplication PRIVATE -Wall -Wextra -Wpedantic)
 
 
-find_library(LIBRARY_SFML sfml)
+# find_library(LIBRARY_SFML sfml)
 if(LIBRARY_SFML)
     target_link_libraries(myApplication PRIVATE ${LIBRARY_SFML})
 else()
@@ -79,4 +63,19 @@ target_link_libraries(myApplication
 )
 
 
-
+# If you want you can manually check what platform you are on with
+message("======================") 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    message("Building on windows") 
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message("Building on Linux") 
+    message("Note: For SFML, Linux may require you to download many dependencies from scratch")
+    message("e.g., sudo apt-get install -y libfreetype6-dev")
+    message("      sudo apt-get install -y libopenal-dev")
+    message("      sudo apt-get install -y libvorbis-dev")
+    message("      sudo apt-get install -y libflac-dev")
+    message("      sudo apt-get install -y libx11-dev")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    message("Building on Mac") 
+endif()
+message("======================") 
