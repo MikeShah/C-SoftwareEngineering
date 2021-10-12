@@ -16,6 +16,11 @@ void otherhelper(){
 
 void helper(){
     otherhelper();
+
+    int* x= nullptr;
+    int* p=x;
+
+    *p = 42;
 }
 
 
