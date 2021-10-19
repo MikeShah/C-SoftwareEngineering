@@ -1,12 +1,13 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main()
-			   // You will only do this in one cpp file,
-			   // even if you have multiple .cpp files in your
-			   // test suite.
-#include "catch_amalgamated.hpp"  // Here is the 'catch header' file for.
-				  // The entire framework. You can download
-		                  // it from the Catch2 github and put it in your 
-			          // 'tests' directory.
+#define CATCH_CONFIG_MAIN  	// This tells Catch to provide a main()
+			   				// You will only do this in one cpp file,
+			   				// even if you have multiple .cpp files
+							// in your test suite.
 
+#include "catch_amalgamated.hpp" // Here is the 'catch header' 
+								 // file for the entire framework.
+								 // You can download it from the 
+								 // Catch2 github and put it in your 
+						         // 'tests' directory.
 
 /*! \brief A simple factorial function 
 */
