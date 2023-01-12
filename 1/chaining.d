@@ -10,11 +10,10 @@ void main(){
 	writeln(sentence.strip.toUpper.replace("MIKE","joe").strip);
 
 	// Apply operations top to bottom
-	writeln(sentence.
-					strip.
-					toUpper.
-					replace("MIKE","joe").
-					strip
+	writeln(sentence.strip
+					.toUpper
+					.replace("MIKE","joe")
+					.strip
 			);
 }
 

@@ -21,5 +21,11 @@ void main(){
 	animals["dog"] = "an animal that barks";
 	animals["cat"] = "an animal that meows";
 
+	// Check if dog exists
+	if("dog" in animals){
+		writeln("dog is here");
+	}
+
+
 	writeln(animals);
 }
