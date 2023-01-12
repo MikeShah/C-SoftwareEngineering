@@ -2,7 +2,6 @@
 import std.stdio;
 
 void main(){
-
 	// Associative array
 	// key = int
 	// value = string
@@ -12,7 +11,10 @@ void main(){
 	writeln(students);	
 	// The order can be confusing sometimes
 	// here's an example for clarity where
-	// I use 'alias' as another name.
+	// I use 'alias' as another name for
+	// 'string' for the purpose of showing you
+	// what the key is (between the []'s) and the
+	// value
 	alias key 	= string;
 	alias value = string;
 	value[key] animals;
@@ -25,7 +27,5 @@ void main(){
 	if("dog" in animals){
 		writeln("dog is here");
 	}
-
-
 	writeln(animals);
 }
