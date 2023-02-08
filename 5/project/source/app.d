@@ -4,6 +4,7 @@ import std.string;
 
 // Load the SDL2 library
 import bindbc.sdl;
+import loader = bindbc.loader.sharedlib;
 
 // Load other project modules
 import Rectangle : Rectangle;
@@ -11,13 +12,31 @@ import Rectangle : Rectangle;
 void main()
 {
     // Load the SDL libraries from bindbc-sdl
-    const SDLSupport ret = loadSDL();
+    // NOTE: Windows users may need this
+    version(Windows) const SDLSupport ret = loadSDL("SDL2.dll");
+    // NOTE: Mac users may need this
+    version(OSX){
+        writeln("Searching for SDL on Mac");
+        const SDLSupport ret = loadSDL();
+    }
+    // NOTE: Linux users probably need this
+    version(linux) const SDLSupport ret = loadSDL();
+    
     if(ret != sdlSupport){
-        writeln("error loading SDL dll");
+        writeln("error loading SDL library");
+        foreach( info; loader.errors){
+            writeln(info.error,':', info.message);
+        }
+    }
+    if(ret == SDLSupport.noLibrary){
+        writeln("error no library");    
+    }
+    if(ret == SDLSupport.badLibrary){
+        writeln("Eror badLibrary, missing symbols");
     }
 
     // Initialize SDL
-    if(SDL_Init(SDL_INIT_VIDEO) !=0){
+    if(SDL_Init(SDL_INIT_EVERYTHING) !=0){
         writeln("SDL_Init: ", fromStringz(SDL_GetError()));
     }
 
@@ -26,7 +45,7 @@ void main()
                                         SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED,
                                         640,
-                                        480,
+                                        480, 
                                         SDL_WINDOW_SHOWN);
     // Load the bitmap surface
     SDL_Surface* imgSurface = SDL_LoadBMP("./test.bmp");
