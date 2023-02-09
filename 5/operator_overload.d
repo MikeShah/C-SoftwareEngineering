@@ -10,14 +10,14 @@ struct StructType{
         mData1 = rhs.mData1;
         mData2 = rhs.mData2;
     }
-
+	// =
     void opAssign(StructType rhs){
         writeln("Assignment");
         mData1 = rhs.mData1;
         mData2 = rhs.mData2;
     }
-
-    bool opEqual(StructType rhs){
+	// ==
+    bool opEquals(StructType rhs){
         writeln("Equality Test");
         return (mData1 == rhs.mData1 &&
                 mData2 == rhs.mData2);

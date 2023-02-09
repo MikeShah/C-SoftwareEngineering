@@ -29,8 +29,8 @@ struct StructType{
         mData2 = rhs.mData2;
     }
     //this(ref StructType rhs){}
-    this(ref return scope StructType rhs){
-    }
+    //this(ref return scope StructType rhs){
+    //}
 }
 
 void main(){

@@ -2,7 +2,6 @@
 import std.stdio;        // writeln
 import core.stdc.stdlib; // malloc for manual allocation
 
-
 struct StructDeepCopy{
     int* memory;
     uint elements;
@@ -10,10 +9,6 @@ struct StructDeepCopy{
     // Perform an actual copy an allocate to
     // new memory
     this(const ref StructDeepCopy rhs){
-        // Free old memory
-        if(memory!=null){
-            free(memory);
-        }
         elements = rhs.elements;
         memory = cast(int*)malloc(int.sizeof * elements);
         // Now perform copy
