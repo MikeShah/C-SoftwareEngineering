@@ -1,0 +1,156 @@
+// Import D standard libraries
+import std.stdio;
+import std.string;
+
+// Load the SDL2 library
+import bindbc.sdl;
+import loader = bindbc.loader.sharedlib;
+
+// Load other project modules
+import Rectangle : Rectangle;
+
+class Singleton{
+	private static Singleton instance;
+	int windowWidth;
+	int windowHeight;
+
+	// Make construtcion private
+	private this(){}
+
+	static Singleton GetInstance(){
+		if(instance is null){
+			instance = new Singleton;
+		}
+		
+		return instance;
+	}
+
+}
+
+void Resize(string operation, int length)(ref Rectangle[length] input){
+	// Set a lower bounds
+	foreach(ref element ; input){
+		// Make Square
+		element.w = element.h;
+		// Set a lower bounds
+		if(element.h < 2){
+			element.h = 2;
+		}
+		// Perform the operation
+		// using a 'mixin'
+	 	mixin("element.w ",operation, ";");
+	 	mixin("element.h ",operation, ";");
+	}
+}
+
+void main()
+{
+    // Load the SDL libraries from bindbc-sdl
+    // NOTE: Windows users may need this
+    version(Windows) const SDLSupport ret = loadSDL("SDL2.dll");
+    // NOTE: Mac users may need this
+    version(OSX){
+        writeln("Searching for SDL on Mac");
+        const SDLSupport ret = loadSDL();
+    }
+    // NOTE: Linux users probably need this
+    version(linux) const SDLSupport ret = loadSDL();
+    
+    if(ret != sdlSupport){
+        writeln("error loading SDL library");
+        foreach( info; loader.errors){
+            writeln(info.error,':', info.message);
+        }
+    }
+    if(ret == SDLSupport.noLibrary){
+        writeln("error no library");    
+    }
+    if(ret == SDLSupport.badLibrary){
+        writeln("Eror badLibrary, missing symbols");
+    }
+
+	// Setup our environment
+	Singleton.GetInstance.windowWidth  =640;
+	Singleton.GetInstance.windowHeight =480;
+
+    // Initialize SDL
+    if(SDL_Init(SDL_INIT_EVERYTHING) !=0){
+        writeln("SDL_Init: ", fromStringz(SDL_GetError()));
+    }
+
+    // Create an SDL window
+    SDL_Window* window= SDL_CreateWindow("D example window",
+                                        SDL_WINDOWPOS_UNDEFINED,
+                                        SDL_WINDOWPOS_UNDEFINED,
+                                        Singleton.GetInstance.windowWidth,
+                                        Singleton.GetInstance.windowHeight, 
+                                        SDL_WINDOW_SHOWN);
+    // Load the bitmap surface
+    SDL_Surface* imgSurface = SDL_LoadBMP("./test.bmp");
+    // Blit the surace
+    SDL_BlitSurface(imgSurface,null,SDL_GetWindowSurface(window),null);
+    // Update the window
+    SDL_UpdateWindowSurface(window);
+    // Delay for 1000 milliseconds
+    SDL_Delay(1000);
+    // Free the image
+    SDL_FreeSurface(imgSurface);
+
+
+	// Create a hardware accelerated renderer
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	if(renderer==null){
+		writeln("ERROR: ", SDL_GetError());
+	}
+
+	// Create a bunch of Rectangles
+	Rectangle[50] rectangles;
+	foreach(ref element; rectangles){
+		element.Setup(Singleton.GetInstance.windowWidth,
+					  Singleton.GetInstance.windowHeight);
+	}
+
+	const ubyte* keys = SDL_GetKeyboardState(null);
+
+	// Run the main application  loop
+	bool runApplication = true;
+	while(runApplication){
+		SDL_Event e;
+		// Handle events
+		while(SDL_PollEvent(&e) !=0){
+			if(e.type == SDL_QUIT){
+				runApplication= false;
+			}
+		}
+
+		if(keys[SDL_SCANCODE_UP]){
+			Resize!("*=2")(rectangles);
+		}else if(keys[SDL_SCANCODE_DOWN]){
+			Resize!("/=2")(rectangles);
+		}
+
+		// Clear the screen 
+		SDL_SetRenderDrawColor(renderer, 0x22,0x22,0x55,0xFF);
+		SDL_RenderClear(renderer);
+
+		foreach(ref element ; rectangles){
+			element.Update(Singleton.GetInstance.windowWidth,
+						   Singleton.GetInstance.windowHeight);
+			element.Render(renderer);
+		}
+
+		SDL_RenderPresent(renderer);
+		// Artificially slow things down
+		SDL_Delay(16);
+	}
+
+	// Destroy our Renderer
+	SDL_DestroyRenderer(renderer);
+    // Destroy our window
+    SDL_DestroyWindow(window);
+    // Quit the SDL Application 
+    SDL_Quit();
+
+	writeln("Ending application--good bye!");
+
+}
