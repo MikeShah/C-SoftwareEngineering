@@ -98,9 +98,22 @@ void main()
 
 
 	// Create a hardware accelerated renderer
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    // It can be useful to 'clear' the errors beforehand in SDL
+    SDL_ClearError();
+    // Pointer to our renderer
+    SDL_Renderer* renderer;
+    // On Mac's, it's possible that creating the window will also create
+    // the renderer, so we should check first.
+    if(SDL_GetRenderer(window)==null){
+       renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    }else{
+        renderer = SDL_GetRenderer(window);
+    }
+    // If there's still an error, then convert the const char* and write
+    // out the string
 	if(renderer==null){
-		writeln("ERROR: ", SDL_GetError());
+        import std.conv;
+		writeln("renderer ERROR: ", to!string(SDL_GetError()));
 	}
 
 	// Create a bunch of Rectangles
