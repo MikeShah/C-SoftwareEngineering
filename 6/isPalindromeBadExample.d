@@ -23,3 +23,5 @@ void main(){
     writeln("123?", isPalindromeBadExample("123")); // WRONG
 
 }
+
+

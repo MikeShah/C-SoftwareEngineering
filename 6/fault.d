@@ -14,3 +14,6 @@ void main(){
     // test our programs behavior
     writeln(square(input));
 }
+
+
+
