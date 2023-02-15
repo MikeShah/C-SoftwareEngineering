@@ -1,5 +1,9 @@
 // @file cov.d
 // Run with: 
+// (1) rdmd -cov -unittest cov.d
+// or
+// (2) rdmd -cov cov.d
+// Observe the difference!
 import std.stdio;
 
 int* function1(){
