@@ -18,8 +18,8 @@ struct PositiveValues{
 	// Ideally we would check the 'state' of our object
 	// meaning each member variable.
 	invariant(){
-		assert(x>=0, "x < 0");
-		assert(y>=0, "y < 0");
+		assert(x>=0, "PositiveValues: x < 0");
+		assert(y>=0, "PositiveValues: y < 0");
 	}
 }
 
