@@ -2,12 +2,12 @@
 import std.stdio;
 
 auto squaref(float value)
-		in{
-			assert(value >=0);
-		}
-		out (result){
-			assert(result >=0);
-		}
+	in{
+		assert(value >=0,"value >0"	);
+	}
+	out (result){
+		assert(result >=0);
+	}
 do
 {
 	return value*value;
