@@ -23,9 +23,8 @@ void main(){
     // Message buffer will be large enough to send/receive Packet.sizeof
     char[Packet.sizeof] buffer;
 
-    bool serverIsRunning=true;
-
     // Main application loop for the server
+    bool serverIsRunning=true;
     while(serverIsRunning){
         readSet.reset();
         readSet.add(listener);
@@ -51,6 +50,4 @@ void main(){
             connectedClientsList ~= newSocket;
         }
     }
-
-
 }
