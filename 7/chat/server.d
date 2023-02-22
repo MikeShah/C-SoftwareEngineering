@@ -34,10 +34,12 @@ void main(){
     // Message buffer will be 1024 bytes 
     char[1024] buffer;
 
-    bool serverIsRunning=true;
-
     // Main application loop for the server
+<<<<<<< HEAD
 	writeln("Awaiting client connections");
+=======
+    bool serverIsRunning=true;
+>>>>>>> 8db2e763abf5f6ee670e2698c0637552c7ca5a82
     while(serverIsRunning){
 		// Clear the readSet
         readSet.reset();
@@ -64,6 +66,7 @@ void main(){
                     client.send(buffer[0 .. got]);
                 }
             }
+<<<<<<< HEAD
 			// The listener is ready to read
 			// Client wants to connect so we accept here.
 			if(readSet.isSet(listener)){
@@ -79,4 +82,15 @@ void main(){
 			}
     	}
 	}
+=======
+        }
+        // The listener is ready to read
+        // Client wants to connect so we accept here.
+        if(readSet.isSet(listener)){
+            auto newSocket = listener.accept();
+            // Add a new client to the list
+            connectedClientsList ~= newSocket;
+        }
+    }
+>>>>>>> 8db2e763abf5f6ee670e2698c0637552c7ca5a82
 }
