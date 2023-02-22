@@ -35,11 +35,8 @@ void main(){
     char[1024] buffer;
 
     // Main application loop for the server
-<<<<<<< HEAD
 	writeln("Awaiting client connections");
-=======
     bool serverIsRunning=true;
->>>>>>> 8db2e763abf5f6ee670e2698c0637552c7ca5a82
     while(serverIsRunning){
 		// Clear the readSet
         readSet.reset();
@@ -51,7 +48,7 @@ void main(){
         
         // Handle each clients message
         if(Socket.select(readSet, null, null)){
-            foreach(client; connectedClientsList){
+            foreach(idx,client; connectedClientsList){
 				// Check to ensure that the client
 				// is in the readSet before receving
 				// a message from the client.
@@ -62,11 +59,12 @@ void main(){
 					// we send that message from the 
 					// server to the client
                     auto got = client.receive(buffer);					
+					// Adding +1 to client index to match number of clients.
+					writeln("client",idx+1,">",buffer);
 					// Send whatever was 'got' from the client.
                     client.send(buffer[0 .. got]);
                 }
             }
-<<<<<<< HEAD
 			// The listener is ready to read
 			// Client wants to connect so we accept here.
 			if(readSet.isSet(listener)){
@@ -82,15 +80,4 @@ void main(){
 			}
     	}
 	}
-=======
-        }
-        // The listener is ready to read
-        // Client wants to connect so we accept here.
-        if(readSet.isSet(listener)){
-            auto newSocket = listener.accept();
-            // Add a new client to the list
-            connectedClientsList ~= newSocket;
-        }
-    }
->>>>>>> 8db2e763abf5f6ee670e2698c0637552c7ca5a82
 }
