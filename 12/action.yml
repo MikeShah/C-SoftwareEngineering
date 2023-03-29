@@ -1,0 +1,76 @@
+# Resources to help
+
+Provided below are a list of curated resources to help you complete the tasks below. Consult them (read them, or do Ctrl+f for keywords) if you get stuck.
+
+- Task 1
+	1. Github Actions
+		- Introduction to Github Actions video (12:32)
+    			- https://www.youtube.com/watch?v=-xIXFxuZCMI
+		- Introduction to Github Actions (38:46)
+			- https://www.youtube.com/watch?v=e_F_4OB9Mg4
+		- Github Actions Documentation
+			- https://help.github.com/en/actions
+ 
+# Task 0 - Find your team!
+
+**Remember** You are working with your team today in your team repository.
+
+# Task 1 - Continuous Integration
+
+[Github actions](https://github.com/features/actions) are githubs built-in way of providing a continuous integration testing system for your project. Other technologies like Jenkins and Travis exist, though having all of the features located in one spot will make it easy for us to get started. Github actions are also very powerful in what you can do. Today you are going to setup in [finalproject/.github/workflows/MainWorkflow.yml](finalproject/.github/workflows/MainWorkflow.yml) your first workflow that will execute tests every time you push code. In this way, github actions will help ensure that code that you are submitting to your repository for example, is code that actually compiles and passes all of the tests. you have in the project.
+
+Provided below is a working C/C++ continuous integration workflow file that will run as a 'github' action everytime you push your code to the master branch. You may implement or modify this for your needs.
+
+```bash
+# A simple DLang Continuous Integration file
+name: DLang CI
+
+# This action is pushed on any push to a specific branch,
+# in this case, the master branch, although you could add others.
+on:
+  push:
+    branches: [ main ]
+    
+# Every github action needs at least one job.
+# We could have multiple jobs, but for now I am only going to include one here.
+jobs:
+  build_and_test: # This is the name of our job, and you will see it in the 'Actions' tab.
+    # We can have our integration tests run on multiple operating systems in 'containers'
+    # that are hosted on github. You can create your own as well, or setup a 'container'
+    # using a tool like docker if you like. For now, I am going to show you the ubuntu setup.
+    # Available environments are here: https://github.com/actions/virtual-environments
+    runs-on: ubuntu-18.04
+    # These are the steps that will be run every time that we run our script, one will follow
+    # the other.
+    # You can pretend you would be manually be typing these out in the terminal everytime you did
+    # a 'push' before.
+    steps:
+      - uses: actions/checkout@v2
+      - name: Quick check to see where we are and who we are.
+        run: pwd && whoami && ls -l
+      # For us, we need to setup our linux box which only takes a few moments
+      - name: Update packages on linux
+        run: sudo apt-get update
+      - name: Install dlang 
+        run: sudo apt-get install dmd
+      - name: Install sdl 
+        run: sudo apt-get install libsdl2-dev
+      - name: build project code
+        run: cd ./labs/ci && dub run
+      # These next two steps need a little bit more explaining, because as we are finding out
+      # testing graphics applications is really hard!
+      # You learned this when you wrote your GUI applications tests earlier.
+      # First and foremost, make sure your tests terminate at some point, otherwise they will run forever
+      # and we will never finish this test!
+      # Second, since we are running our code on github.com, we do not have a 'window', so we need
+      # to install some tools that emulate having an actual desktop window to run our program in.
+      # 'xvfb ' is one such tool, and you can see how I have set it up below.
+      - name: Setup headless x11 window
+        run: sudo apt-get install xvfb xorg xauth openbox # xorg is needed to set DISPLAY variable later
+      - name: Run graphical application tests in headless mode
+        run: cd ./labs/ci && xvfb-run --server-args="-screen 0 1024x768x24" ./ci
+```
+
+### Expanding on the workflow
+
+Making sure your code compiles and passes tests is one thing, but we can also incorporate some of the other tasks that we have done throughout the semester. As an example, you can add a 'linter' or style checker to your code. For your task, you will have dscanner or dfmt automatically run on all of the ./source files
