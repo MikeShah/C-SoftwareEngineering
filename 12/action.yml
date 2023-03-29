@@ -30,7 +30,7 @@ name: DLang CI
 on:
   push:
     branches: [ main ]
-    
+
 # Every github action needs at least one job.
 # We could have multiple jobs, but for now I am only going to include one here.
 jobs:
@@ -51,9 +51,9 @@ jobs:
       # For us, we need to setup our linux box which only takes a few moments
       - name: Update packages on linux
         run: sudo apt-get update
-      - name: Install dlang 
-        run: sudo apt-get install dmd
-      - name: Install sdl 
+      - name: Install dlang
+        run: D_VERSION=$(wget -qO - http://downloads.dlang.org/releases/LATEST) && wget -qO dmd.deb http://downloads.dlang.org/releases/2.x/${D_VERSION}/dmd_${D_VERSION}-0_amd64.deb && sudo apt install -y ./dmd.deb && dmd --version && rm -rf dmd.deb
+      - name: Install sdl dependency
         run: sudo apt-get install libsdl2-dev
       - name: build project code
         run: cd ./labs/ci && dub run
