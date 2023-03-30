@@ -1,0 +1,53 @@
+# A simple DLang Continuous Integration file
+name: DLang CI
+
+# This action is pushed on any push to a specific branch,
+# in this case, the master branch, although you could add others.
+on:
+  push:
+    branches: [ main ]
+    
+# Every github action needs at least one job.
+# We could have multiple jobs, but for now I am only going to include one here.
+jobs:
+  build_and_test: # This is the name of our job, and you will see it in the 'Actions' tab.
+    # We can have our integration tests run on multiple operating systems in 'containers'
+    # that are hosted on github. You can create your own as well, or setup a 'container'
+    # using a tool like docker if you like. For now, I am going to show you the ubuntu setup.
+    # Available environments are here: https://github.com/actions/virtual-environments
+    runs-on: ubuntu-18.04
+    # These are the steps that will be run every time that we run our script, one will follow
+    # the other.
+    # You can pretend you would be manually be typing these out in the terminal everytime you did
+    # a 'push' before.
+    steps:
+      - uses: actions/checkout@v2
+      - name: Quick check to see where we are and who we are.
+        run: pwd && whoami && ls -l
+      # For us, we need to setup our linux box which only takes a few moments
+      - name: Update packages on linux
+        run: sudo apt-get update
+      - name: Install sdl2 dependency 
+        run: sudo apt-get install -y libsdl2-dev
+      - name: Install dlang 
+        run: D_VERSION=$(wget -qO - http://downloads.dlang.org/releases/LATEST) && wget -qO dmd.deb http://downloads.dlang.org/releases/2.x/${D_VERSION}/dmd_${D_VERSION}-0_amd64.deb && sudo apt install -y ./dmd.deb && dmd --version && rm -rf dmd.deb 
+#      - name: Install SDL2 deb
+#        run: wget http://http.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-dev_2.0.14+dfsg2-3+deb11u1_amd64.deb && sudo apt install -y ./libsdl2-dev_2.0.14+dfsg2-3+deb11u1_amd64.deb && sudo apt-get -f install -y
+      - name: build and run tests of project code
+        run: cd ./labs/ci && dub test 
+      # These next two steps need a little bit more explaining, because as we are finding out
+      # testing graphics applications is really hard!
+      # You learned this when you wrote your GUI applications tests earlier.
+      # First and foremost, make sure your tests terminate at some point, otherwise they will run forever
+      # and we will never finish this test!
+      # Second, since we are running our code on github.com, we do not have a 'window', so we need
+      # to install some tools that emulate having an actual desktop window to run our program in.
+      # 'xvfb ' is one such tool, and you can see how I have set it up below.
+      - name: Setup configuration for install
+        run: echo 31 | cat > input.txt && cat input.txt; 
+        #      - name: Setup headless x11 window
+        #        run: sudo apt-get install -q -y --force-yes xvfb xorg xauth openbox  # xorg is needed to set DISPLAY variable later
+        #- name: Run graphical application tests in headless mode
+        #        run: cd ./labs/ci && xvfb-run --server-args="-screen 0 1024x768x24" ./ci
+      - name: Run non-graphical application tests
+        run: cd ./labs/ci && ./ci
