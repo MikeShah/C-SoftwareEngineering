@@ -1,3 +1,10 @@
+/*
+    The following is a sample with using gtk+3 with SDL2.
+    Note that we want to handle all events from one library,
+    in this case gtk.
+
+*/
+// Imports from dependencies
 import std.stdio;
 
 import gtk.MainWindow;
@@ -28,11 +35,17 @@ import bindbc.sdl;
 import loader = bindbc.loader.sharedlib;
 
 
-// global variable for window
-Window  gdkWindowForSDL;
-uint    gdkWindowXID;
+// Some global variables
+// TODO: Remove or contain global state in a struct.
+Window          gdkWindowForSDL;
+uint            gdkWindowXID;
+Command[]       CommandQueue;
+SDL_Surface*    imgSurface= null;
+bool            drawing = false;
+
 // global variable for sdl;
 const SDLSupport ret;
+
 /// At the module level we perform any initialization before our program
 /// executes. Effectively, what I want to do here is make sure that the SDL
 /// library successfully initializes.
@@ -81,11 +94,13 @@ shared static ~this(){
 	writeln("Ending application--good bye!");
 }
 
+// Interface for a command
 interface Command{
 	int Execute();
 	int Undo();
 }
 
+// Example class for implementing a command
 class SurfaceOperation : Command{
 	SDL_Surface* mSurface;
 	int mXPosition;
@@ -139,79 +154,90 @@ class SurfaceOperation : Command{
 }
 
 
+// Handle mouse presses
+bool onMousePressed(Event event, Widget widget){
+    bool result = false;
+    if(event.type == EventType.BUTTON_PRESS){
+        // Set drawing to true so we are in a draw state
+        drawing=true;
+    }
 
-// Entry point to program
-void RunSDL()
+    if(event.type == EventType.MOTION_NOTIFY && drawing==true){
+        // Retrieve coordinates of where event happened
+        double xPos,yPos;
+        event.getRootCoords(xPos,yPos);
+        writeln("(rootCoords) mouse pressed:",xPos,yPos);
+        event.getCoords(xPos,yPos);
+        writeln("(relativeCoords) mouse pressed:",xPos,yPos);
+    }
+
+    return result;
+}
+
+// Handle mouse motion after moving brush
+bool onMouseMoved(Event event, Widget widget){
+    bool result=false;
+    
+    if(event.type == EventType.MOTION_NOTIFY && drawing==true){
+        // Retrieve coordinates of where event happened
+        double xPos,yPos;
+        event.getCoords(xPos,yPos);
+
+        // Loop through and update specific pixels
+        // NOTE: No bounds checking performed --
+        //       think about how you might fix this :)
+        int brushSize=4;
+        for(int w=-brushSize; w < brushSize; w++){
+            for(int h=-brushSize; h < brushSize; h++){
+                // Create a new command
+                auto command = new SurfaceOperation(imgSurface,cast(uint)(xPos+w),cast(uint)(yPos+h));
+                // Append to the end of our queue
+                CommandQueue ~= command;
+                // Execute the last command
+                CommandQueue[$-1].Execute();
+            }
+        }
+
+        result = true;
+    }
+
+    return result;
+}
+
+// Handle mouse release events
+bool onMouseReleased(Event event, Widget widget){
+    bool result=false;
+
+    if(event.type == EventType.BUTTON_RELEASE){
+        drawing = false;
+    }
+
+    return result;
+}
+
+// SDL Portion of the program 
+static bool RunSDL()
 {
-    // Create an SDL window
-    /*
-    SDL_Window* window= SDL_CreateWindow("D SDL Painting",
-                                        SDL_WINDOWPOS_UNDEFINED,
-                                        SDL_WINDOWPOS_UNDEFINED,
-                                        640,
-                                        480, 
-                                        SDL_WINDOW_SHOWN);
-    */
     static SDL_Window* window=null;
     // Flag for determing if we are running the main application loop
     static bool runApplication = true;
     // Flag for determining if we are 'drawing' (i.e. mouse has been pressed
     //                                                but not yet released)
-    static bool drawing = false;
-    static Command[] CommandQueue;
-    static SDL_Surface* imgSurface= null;
 
-    writeln("hi");
     if(window==null){
         window = SDL_CreateWindowFrom(cast(const(void)*)gdkWindowXID);
         // Do some error checking to see if we retrieve a window
         if(window==null){
-            writeln("SDL_GetError()",SDL_GetError());
+            writeln("window-SDL_GetError()",SDL_GetError());
         }
         // Load the bitmap surface
         imgSurface = SDL_CreateRGBSurface(0,640,480,32,0,0,0,0);
+        if(imgSurface==null){
+            writeln("imgSurface-SDL_GetError()",SDL_GetError());
+        }
     }
-    writeln("bye");
 
     if(window!=null){
-        // Main application loop that will run until a quit event has occurred.
-        // This is the 'main graphics loop'
-        while(runApplication){
-            SDL_Event e;
-            // Handle events
-            // Events are pushed into an 'event queue' internally in SDL, and then
-            // handled one at a time within this loop for as many events have
-            // been pushed into the internal SDL queue. Thus, we poll until there
-            // are '0' events or a NULL event is returned.
-            while(SDL_PollEvent(&e) !=0){
-                if(e.type == SDL_QUIT){
-                    runApplication= false;
-                }
-                else if(e.type == SDL_MOUSEBUTTONDOWN){
-                    drawing=true;
-                }else if(e.type == SDL_MOUSEBUTTONUP){
-                    drawing=false;
-                }else if(e.type == SDL_MOUSEMOTION && drawing){
-                    // retrieve the position
-                    int xPos = e.button.x;
-                    int yPos = e.button.y;
-                    // Loop through and update specific pixels
-                    // NOTE: No bounds checking performed --
-                    //       think about how you might fix this :)
-                    int brushSize=4;
-                    for(int w=-brushSize; w < brushSize; w++){
-                        for(int h=-brushSize; h < brushSize; h++){
-                            // Create a new command
-                            auto command = new SurfaceOperation(imgSurface,xPos+w,yPos+h);
-                            // Append to the end of our queue
-                            CommandQueue ~= command;
-                            // Execute the last command
-                            CommandQueue[$-1].Execute();
-                        }
-                    }
-                }
-            }
-
             // Blit the surace (i.e. update the window with another surfaces pixels
             //                       by copying those pixels onto the window).
             SDL_BlitSurface(imgSurface,null,SDL_GetWindowSurface(window),null);
@@ -219,9 +245,7 @@ void RunSDL()
             SDL_UpdateWindowSurface(window);
             // Delay for 16 milliseconds
             // Otherwise the program refreshes too quickly
-            SDL_Delay(16);
-        }
-
+        //}
     }
 
     // Free the image
@@ -230,26 +254,26 @@ void RunSDL()
     }
     // Destroy our window
 //    SDL_DestroyWindow(window);
+    return true;
 }
 
 
-
+// Example function to call to quit application
+// from gtk
 void QuitApp(){
 	writeln("Terminating application");
 
 	Main.quit();
 }
 
-void callnew(){
-    writeln("callnew function");
-}
 
+// Entry point into program
 void main(string[] args)
 {
 	// Initialize GTK
 	Main.init(args);
 	// Setup our window
-	MainWindow myWindow = new MainWindow("Tutorial 02");
+	MainWindow myWindow = new MainWindow("Tutorial 06?");
     myWindow.setTitle("SDL with gtk+3 example");
 	// Position our window
 	myWindow.setDefaultSize(640,480);
@@ -262,9 +286,9 @@ void main(string[] args)
 	// Delegate to call when we destroy our application
 	myWindow.addOnDestroy(delegate void(Widget w) { QuitApp(); });
 
-
     // Create a new Box
     const int globalPadding=2;
+    const int localPadding= 2;
     auto myBox = new Box(Orientation.VERTICAL,globalPadding);
 
     // Create a menu bar and menu items
@@ -291,6 +315,11 @@ void main(string[] args)
     // Add menu and do not expand or fill or pad 
     myBox.packStart(menuBar,false,false,0);
 
+    // Create a new drawing area
+    auto gtkDrawingArea = new DrawingArea;
+    gtkDrawingArea.setSizeRequest(640,480);
+    myBox.packStart(gtkDrawingArea,true,true,localPadding);
+
 	// We'll now create a 'button' to add to our aplication.
 	Button myButton1 = new Button("Button1 Text");
 	Button myButton2 = new Button("Button2 Text");
@@ -299,7 +328,6 @@ void main(string[] args)
     Layout myLayout = new Layout(null,null);
     myLayout.put(myButton3,0,0);
 
-    const int localPadding= 2;
     //              button    expand fill padding
     myBox.packStart(myButton1,true,true,localPadding);
     myBox.packStart(myButton2,true,true,localPadding);
@@ -315,10 +343,6 @@ void main(string[] args)
 //							writeln("myButtonReleased");
 //						});
  
-    // Create a new drawing area
-    auto gtkDrawingArea = new DrawingArea;
-    gtkDrawingArea.setSizeRequest(640,480);
-    myBox.packStart(gtkDrawingArea,true,true,localPadding);
 
     // Add to our window the box
     // as a child widget
@@ -334,19 +358,21 @@ void main(string[] args)
 
     // Useful information for SDL within a GTK window
     // https://stackoverflow.com/questions/47284284/how-to-render-sdl2-texture-into-gtk3-window
-    //auto gdk_window = gtk_widget_get_window(GTK_WIDGET(myWindow));
-    //auto window_id = cast(void*)cast(int*)GDK_WINDOW_XID(gtkDrawingArea);
     gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
     gdkWindowForSDL = gtkDrawingArea.getWindow(); 
     gdkWindowXID = gdkWindowForSDL.getXid();
-
-    writeln(typeid(gdkWindowForSDL));
-    
-
+ 
     // Creating a new idle event will fire whenever there is not anything
-    // else to do
-    auto idle = new Idle(delegate bool(){ RunSDL(); return true;});
+    // else to do -- effectively this is where we will draw in SDL
+    auto idle = new Idle(delegate bool(){ return RunSDL();});
 
-	// Run our main loop
+    // Handle events on our main window
+    // Essentially hook up a bunch of functions to handle input/output
+    // events in our program.
+    myWindow.addOnButtonPress(delegate bool(Event e,Widget w){ return onMousePressed(e,w);});
+    myWindow.addOnButtonRelease(delegate bool(Event e,Widget w){ return onMouseReleased(e,w);});
+    myWindow.addOnMotionNotify(delegate bool(Event e,Widget w){ return onMouseMoved(e,w);});
+
+	// Run our main gtk+3 loop
 	Main.run();
 }
