@@ -16,6 +16,9 @@ class TCPServer{
 				this(string host = "localhost", ushort port=50001, ushort maxConnectionsBacklog=4){
 					writeln("Starting server...");
 					writeln("Server must be started before clients may join");
+					// Note: AddressFamily.INET tells us we are using IPv4 Internet protocol
+					// Note: SOCK_STREAM (SocketType.STREAM) creates a TCP Socket
+					//       If you want UDPClient and UDPServer use 'SOCK_DGRAM' (SocketType.DGRAM)
 					mListeningSocket = new Socket(AddressFamily.INET, SocketType.STREAM);
 					// Set the hostname and port for the socket
 					// NOTE: It's possible the port number is in use if you are not able

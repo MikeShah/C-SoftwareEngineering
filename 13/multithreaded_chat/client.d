@@ -14,6 +14,9 @@ class TCPClient{
 	this(string host = "localhost", ushort port=50001){
 		writeln("Starting client...attempt to create socket");
 		// Create a socket for connecting to a server
+		// Note: AddressFamily.INET tells us we are using IPv4 Internet protocol
+		// Note: SOCK_STREAM (SocketType.STREAM) creates a TCP Socket
+		//       If you want UDPClient and UDPServer use 'SOCK_DGRAM' (SocketType.DGRAM)
 		mSocket = new Socket(AddressFamily.INET, SocketType.STREAM);
 		// Socket needs an 'endpoint', so we determine where we
 		// are going to connect to.
