@@ -19,7 +19,8 @@ void main(){
 	// Functional-style
 
 	auto words2 = ["hello", "world", "dlang", "c++", "java"];
-	auto result = words.filter!(a=> a.indexOf("dlang") >=0).count;
+	import std.array;
+	auto result = words.filter!(a=> a.indexOf("dlang") >=0).array;
 	writeln("Cool langauges found: ",result);
 
 }

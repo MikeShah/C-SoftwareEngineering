@@ -17,4 +17,10 @@ void main(){
 	auto result = range.map!(a=>a+1);
 	writeln(result);
 
+	iota(1,4,1).map!"a=>a+1".writeln;
+
 }
+
+
+
+

@@ -11,6 +11,7 @@ void foo(){
 }
 
 void main(){
+		int mike=0;
     foo();
     foo();
     foo();
