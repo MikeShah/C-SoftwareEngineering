@@ -11,8 +11,6 @@ interface Animal{
 	final void Move(){
 		writeln("All animals have this function");
 	}	
-
-
 	// int someAttribute; // No Fields allowed in interface
 }
 
