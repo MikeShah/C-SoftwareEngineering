@@ -4,6 +4,9 @@ import std.stdio;
 void Safe() @safe{
     string[] strings = new string[5];
     writeln(strings);
+   //    UnSafe(); // Cannot call unsafe(i.e. system)
+                // code within @safe functions.
+                // Can call other @safe or @trusted.
 }
 
 void UnSafe() @system // Note: @system is the default
@@ -20,6 +23,5 @@ void UnSafe() @system // Note: @system is the default
 void main(){
     Safe();
     UnSafe();
-
 }
 
