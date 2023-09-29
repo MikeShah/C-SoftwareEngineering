@@ -18,6 +18,8 @@ struct StructDeepCopy{
         }
 
     }
+		// Note: Should also write an opAssign and destructor!
+		//       Rule of 3!
 }
 
 void main(){
