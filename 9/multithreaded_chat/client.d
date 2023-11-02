@@ -75,6 +75,9 @@ class TCPClient{
 			// Note: It's important to recreate or 'zero out' the buffer so that you do not
 			// 			 get previous data leftover in the buffer.
 			char[80] buffer;
+            // The key here is to observe the 'receive' portion of the bytes received.
+            // Depending on our socket type, this could be a blocking operation, or otherwise
+            // we do something when we receive some data from the server
 			auto fromServer = buffer[0 .. mSocket.receive(buffer)];
 			if(fromServer.length > 0){
 				writeln("(from server)>",fromServer);

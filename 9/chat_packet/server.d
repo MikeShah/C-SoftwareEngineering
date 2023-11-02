@@ -60,6 +60,9 @@ void main(){
 					// server to the client
                     auto got = client.receive(buffer);
 					
+                    // The thing to note here is how we are reading 
+                    // bytes back from what is received.
+                    // We can 
 					Packet p;
 				    p.user 	= buffer[0 .. 16];
 					

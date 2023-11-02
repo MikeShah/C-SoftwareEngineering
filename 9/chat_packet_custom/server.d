@@ -79,6 +79,8 @@ void main(){
 			// Client wants to connect so we accept here.
 			if(readSet.isSet(listener)){
 				auto newSocket = listener.accept();
+				writeln("type of new Socket",typeid(newSocket));
+
 				// Based on how our client is setup,
 				// we need to send them an 'acceptance'
 				// message, so that the client can
@@ -88,6 +90,24 @@ void main(){
 				connectedClientsList ~= newSocket;
 				writeln("> client",connectedClientsList.length," added to connectedClientsList");
 			}
+
+//			spawn(&sendWork, c, true);
     	}
 	}
 }
+
+/*
+CommandQueue[] commands;
+
+void sendWork(Client c){
+	while(clientsCurrentCommandQueuepos < commands.length){
+		c.socket.send();
+	}
+}
+
+struct Client{
+	//socket;
+	int pos;
+
+}
+*/
