@@ -13,12 +13,14 @@ void main(){
 	scope(exit) listener.close();
 
 	// Set the hostname and port for the socket
-    string host = "localhost";
-    ushort port = 50001;
 	// NOTE: It's possible the port number is in use if you are not able
 	//  	 to connect. Try another one.
+    string host = "localhost";
+    ushort port = 50001;
+	// When we 'bind' we are assigning an address with a port to a socket.
     listener.bind(new InternetAddress(host,port));
-    // Allow 4 connections to be queued up
+	// 'listen' means that a socket can 'accept' connections from another socket.
+    // Allow 4 connections to be queued up in the 'backlog'
     listener.listen(4);
 
 	// A SocketSet is equivalent to 'fd_set'
