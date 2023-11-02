@@ -1,7 +1,6 @@
 /// rdmd -unittest unittester.d
 module unittester;
 
-
 import core.runtime;
 import std.typecons;
 import std.stdio;
@@ -24,7 +23,7 @@ static this(){
 	Runtime.moduleUnitTester = {return true;};
 
 	// Retrieves unit tests
-    alias tests = __traits(getUnitTests, unittests);
+    alias tests = __traits(getUnitTests, unittester);
 	writeln("Unit tests Found: ",tests.length);
 
 	foreach(test; tests){

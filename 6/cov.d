@@ -22,7 +22,12 @@ int* function3(){
 
 // unittest
 unittest{
+	if(true){
 	function3();
+	}else{
+		import std.stdio;
+		writeln("hi");
+	}
 }
 
 
