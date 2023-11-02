@@ -1,128 +1,95 @@
 /// Run with: 'dub'
 
+module app;
+
 // Import D standard libraries
 import std.stdio;
 import std.string;
 
+//import setup_sdl;
+import sprite;
+import tilemap;
+
 // Load the SDL2 library
 import bindbc.sdl;
-import loader = bindbc.loader.sharedlib;
 
-// global variable for sdl;
-const SDLSupport ret;
+struct Player{
+    // Load our sprite
+    Sprite mSprite;
 
-/// At the module level we perform any initialization before our program
-/// executes. Effectively, what I want to do here is make sure that the SDL
-/// library successfully initializes.
-shared static this(){
-		// Load the SDL libraries from bindbc-sdl
-		// on the appropriate operating system
-    version(Windows){
-    		writeln("Searching for SDL on Windows");
-				ret = loadSDL("SDL2.dll");
-		}
-  	version(OSX){
-      	writeln("Searching for SDL on Mac");
-        ret = loadSDL();
-    }
-    version(linux){ 
-      	writeln("Searching for SDL on Linux");
-				ret = loadSDL();
-		}
-
-		// Error if SDL cannot be loaded
-    if(ret != sdlSupport){
-        writeln("error loading SDL library");    
-        foreach( info; loader.errors){
-            writeln(info.error,':', info.message);
-        }
-    }
-    if(ret == SDLSupport.noLibrary){
-        writeln("error no library found");    
-    }
-    if(ret == SDLSupport.badLibrary){
-        writeln("Eror badLibrary, missing symbols, perhaps an older or very new version of SDL is causing the problem?");
+    this(SDL_Renderer* renderer, string filepath){
+        mSprite = Sprite(renderer,filepath);
     }
 
-    // Initialize SDL
-    if(SDL_Init(SDL_INIT_EVERYTHING) !=0){
-        writeln("SDL_Init: ", fromStringz(SDL_GetError()));
+    int GetX(){
+        return mSprite.mXPos;
+    }
+    int GetY(){
+        return mSprite.mYPos;
+    }
+
+    void MoveUp(){
+        mSprite.mYPos -=16;
+        mSprite.mState = STATE.WALK;
+    }
+    void MoveDown(){
+        mSprite.mYPos +=16;
+        mSprite.mState = STATE.WALK;
+    }
+    void MoveLeft(){
+        mSprite.mXPos -=16;
+        mSprite.mState = STATE.WALK;
+    }
+    void MoveRight(){
+        mSprite.mXPos +=16;
+        mSprite.mState = STATE.WALK;
+    }
+
+    void Render(SDL_Renderer* renderer){
+        mSprite.Render(renderer);
+        mSprite.mState = STATE.IDLE;
     }
 }
 
-/// At the module level, when we terminate, we make sure to 
-/// terminate SDL, which is initialized at the start of the application.
-shared static ~this(){
-    // Quit the SDL Application 
-    SDL_Quit();
-		writeln("Ending application--good bye!");
+interface Command{
+    void Execute();
+    void Undo();
 }
 
-
-
-struct Sprite{
-
-		SDL_Rect mRectangle;
-		SDL_Texture* mTexture;
-
-
-		this(SDL_Renderer* renderer, string filepath){
-			// Load the bitmap surface
-			SDL_Surface* myTestImage   = SDL_LoadBMP("./assets/images/test.bmp");
-			// Create a texture from the surface
-			mTexture = SDL_CreateTextureFromSurface(renderer,myTestImage);
-			// Done with the bitmap surface pixels after we create the texture, we have
-			// effectively updated memory to GPU texture.
-			SDL_FreeSurface(myTestImage);
-
-			// Rectangle is where we will represent the shape
-			mRectangle.x = 50;
-			mRectangle.y = 50;
-			mRectangle.w = 100;
-			mRectangle.h = 100;
-		}
-
-		void Render(SDL_Renderer* renderer){
-			static int frame =0;
-
-			if(frame > 3){
-				frame =0;
-			}
-
-			SDL_Rect selection;
-			selection.x = 64*frame;
-			selection.y = 0;
-			selection.w = 64;
-			selection.h = 64;
-
-    	SDL_RenderCopy(renderer,mTexture,&selection,&mRectangle);
-
-			frame++;
-		}
+class MoveSprite : Command {
+    override void Execute(){}
+    override void Undo() {}
 }
-
 
 
 // Entry point to program
 void main()
 {
+    writeln("Arrowkeys to move, hold 'space' key for tile map selctor demo"); 
     // Create an SDL window
-    SDL_Window* window= SDL_CreateWindow("D SDL Image Example",
+    SDL_Window* window= SDL_CreateWindow("D SDL Tilemap Example",
                                         SDL_WINDOWPOS_UNDEFINED,
                                         SDL_WINDOWPOS_UNDEFINED,
                                         640,
                                         480, 
                                         SDL_WINDOW_SHOWN);
-		// Create a hardware accelerated renderer
-		SDL_Renderer* renderer = null;
-		renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
+    // Create a hardware accelerated renderer
+    SDL_Renderer* renderer = null;
+    renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
 
-		// Load our sprite
-		Sprite s = Sprite(renderer,"./assets/images/test.bmp");
+    // Load our tiles from an image
+    TileSet ts = TileSet(renderer, "./assets/kenney_roguelike-modern-city/Tilemap/tilemap_packed.bmp", 16,37,28);
+    DrawableTileMap dt = DrawableTileMap(ts);
 
+    // Create our player
+    Player player = Player(renderer, "./assets/images/test.bmp");
 
     // Infinite loop for our application
     bool gameIsRunning = true;
+
+    // How 'zoomed' in are we
+    int zoomFactor =3;
+
     // Main application loop
     while(gameIsRunning){
         SDL_Event event;
@@ -135,6 +102,35 @@ void main()
                 gameIsRunning= false;
             }
         }
+
+        // Get Keyboard input
+        const ubyte* keyboard = SDL_GetKeyboardState(null);
+
+        int playerX = player.GetX();
+        int playerY = player.GetY();
+
+        // Check if it's legal to move a direction
+        // TODO: Consider moving this into a function
+        //       e.g. 'legal move'
+        bool moveLeft   = dt.GetTileAt(playerX-16,playerY,zoomFactor)==966? true : false;
+        bool moveRight  = dt.GetTileAt(playerX+16,playerY,zoomFactor)==966? true : false;
+        bool moveUp     = dt.GetTileAt(playerX,playerY-16,zoomFactor)==966? true : false;
+        bool moveDown   = dt.GetTileAt(playerX,playerY+16,zoomFactor)==966? true : false;
+
+        // Check for movement
+        if(keyboard[SDL_SCANCODE_LEFT] && moveLeft){ 
+            player.MoveLeft();
+        }
+        if(keyboard[SDL_SCANCODE_RIGHT] && moveRight){
+            player.MoveRight();
+        }
+        if(keyboard[SDL_SCANCODE_UP] && moveUp){
+            player.MoveUp();
+        }
+        if(keyboard[SDL_SCANCODE_DOWN] && moveDown){
+            player.MoveDown();
+        }
+
         // (2) Handle Updates
 
         // (3) Clear and Draw the Screen
@@ -142,15 +138,30 @@ void main()
         SDL_SetRenderDrawColor(renderer,100,190,255,SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
 
-				// Draw our sprite
-				s.Render(renderer);
+        // NOTE: The draw order here is very important
+        //       We follow the 'painters algorithm' in 2D
+        //       meaning that we draw the background first,
+        //       and then our objects on top.
 
-				// Little frame capping hack so we don't run too fast
-				SDL_Delay(250);
+        // Render out DrawableTileMap
+        dt.Render(renderer,zoomFactor);
+
+        // Draw our sprite
+        player.Render(renderer);
+       
+        // Draw the tile preview just so we can see all the different tiles in the tile map
+        // ts.ViewTiles(renderer,480,400,8);
+
+        if(keyboard[SDL_SCANCODE_SPACE]){
+            ts.TileSetSelector(renderer);
+        }
+
+        // Little frame capping hack so we don't run too fast
+        SDL_Delay(125);
 
         // Finally show what we've drawn
+        // (i.e. anything where we have called SDL_RenderCopy will be in memory and presnted here)
         SDL_RenderPresent(renderer);
-
     }
 
 
