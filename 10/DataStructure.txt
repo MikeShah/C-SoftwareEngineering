@@ -1,0 +1,11 @@
+// DataStructure.txt 
+struct DataStructure(T){
+    T[] data;
+
+
+    mixin("void PrintData(){ 
+            import std.stdio;
+                writeln(\"data: \",this.data);
+           }"
+          );
+}
