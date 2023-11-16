@@ -25,66 +25,20 @@ import std.string;
 
 // Load the SDL2 library
 import bindbc.sdl;
-import loader = bindbc.loader.sharedlib;
 
 
 // global variable for window
 Window  gdkWindowForSDL;
 uint    gdkWindowXID;
-// global variable for sdl;
-const SDLSupport ret;
-/// At the module level we perform any initialization before our program
-/// executes. Effectively, what I want to do here is make sure that the SDL
-/// library successfully initializes.
-shared static this(){
-    // Load the SDL libraries from bindbc-sdl
-	// on the appropriate operating system
-    version(Windows){
-        writeln("Searching for SDL on Windows");
-		ret = loadSDL("SDL2.dll");
-	}
-    version(OSX){
-        writeln("Searching for SDL on Mac");
-        ret = loadSDL();
-    }
-    version(linux){ 
-        writeln("Searching for SDL on Linux");
-		ret = loadSDL();
-	}
-
-	// Error if SDL cannot be loaded
-    if(ret != sdlSupport){
-        writeln("error loading SDL library");
-        
-        foreach( info; loader.errors){
-            writeln(info.error,':', info.message);
-        }
-    }
-    if(ret == SDLSupport.noLibrary){
-        writeln("error no library found");    
-    }
-    if(ret == SDLSupport.badLibrary){
-        writeln("Eror badLibrary, missing symbols, perhaps an older or very new version of SDL is causing the problem?");
-    }
-
-    // Initialize SDL
-    if(SDL_Init(SDL_INIT_EVERYTHING) !=0){
-        writeln("SDL_Init: ", fromStringz(SDL_GetError()));
-    }
-}
-
-/// At the module level, when we terminate, we make sure to 
-/// terminate SDL, which is initialized at the start of the application.
-shared static ~this(){
-    // Quit the SDL Application 
-    SDL_Quit();
-	writeln("Ending application--good bye!");
-}
 
 interface Command{
 	int Execute();
 	int Undo();
 }
+
+// NOTE: Globals for now, could refactor elsewhere
+static SDL_Surface* imgSurface= null;
+static Command[] CommandQueue;
 
 class SurfaceOperation : Command{
 	SDL_Surface* mSurface;
@@ -139,89 +93,39 @@ class SurfaceOperation : Command{
 }
 
 
-
 // Entry point to program
 void RunSDL()
 {
-    // Create an SDL window
-    /*
-    SDL_Window* window= SDL_CreateWindow("D SDL Painting",
-                                        SDL_WINDOWPOS_UNDEFINED,
-                                        SDL_WINDOWPOS_UNDEFINED,
-                                        640,
-                                        480, 
-                                        SDL_WINDOW_SHOWN);
-    */
+    // Create an SDL window handle
     static SDL_Window* window=null;
     // Flag for determing if we are running the main application loop
     static bool runApplication = true;
     // Flag for determining if we are 'drawing' (i.e. mouse has been pressed
     //                                                but not yet released)
     static bool drawing = false;
-    static Command[] CommandQueue;
-    static SDL_Surface* imgSurface= null;
 
-    writeln("hi");
     if(window==null){
+        writeln("Creating initial window");
         window = SDL_CreateWindowFrom(cast(const(void)*)gdkWindowXID);
         // Do some error checking to see if we retrieve a window
         if(window==null){
             writeln("SDL_GetError()",SDL_GetError());
+        }else{
+            writeln("Completed creating initial window");
         }
         // Load the bitmap surface
         imgSurface = SDL_CreateRGBSurface(0,640,480,32,0,0,0,0);
     }
-    writeln("bye");
 
     if(window!=null){
-        // Main application loop that will run until a quit event has occurred.
-        // This is the 'main graphics loop'
-        while(runApplication){
-            SDL_Event e;
-            // Handle events
-            // Events are pushed into an 'event queue' internally in SDL, and then
-            // handled one at a time within this loop for as many events have
-            // been pushed into the internal SDL queue. Thus, we poll until there
-            // are '0' events or a NULL event is returned.
-            while(SDL_PollEvent(&e) !=0){
-                if(e.type == SDL_QUIT){
-                    runApplication= false;
-                }
-                else if(e.type == SDL_MOUSEBUTTONDOWN){
-                    drawing=true;
-                }else if(e.type == SDL_MOUSEBUTTONUP){
-                    drawing=false;
-                }else if(e.type == SDL_MOUSEMOTION && drawing){
-                    // retrieve the position
-                    int xPos = e.button.x;
-                    int yPos = e.button.y;
-                    // Loop through and update specific pixels
-                    // NOTE: No bounds checking performed --
-                    //       think about how you might fix this :)
-                    int brushSize=4;
-                    for(int w=-brushSize; w < brushSize; w++){
-                        for(int h=-brushSize; h < brushSize; h++){
-                            // Create a new command
-                            auto command = new SurfaceOperation(imgSurface,xPos+w,yPos+h);
-                            // Append to the end of our queue
-                            CommandQueue ~= command;
-                            // Execute the last command
-                            CommandQueue[$-1].Execute();
-                        }
-                    }
-                }
-            }
-
-            // Blit the surace (i.e. update the window with another surfaces pixels
-            //                       by copying those pixels onto the window).
-            SDL_BlitSurface(imgSurface,null,SDL_GetWindowSurface(window),null);
-            // Update the window surface
-            SDL_UpdateWindowSurface(window);
-            // Delay for 16 milliseconds
-            // Otherwise the program refreshes too quickly
-            SDL_Delay(16);
-        }
-
+		// Blit the surace (i.e. update the window with another surfaces pixels
+		//                       by copying those pixels onto the window).
+		SDL_BlitSurface(imgSurface,null,SDL_GetWindowSurface(window),null);
+		// Update the window surface
+		SDL_UpdateWindowSurface(window);
+		// Delay for 16 milliseconds
+		// Otherwise the program refreshes too quickly
+		//SDL_Delay(16);
     }
 
     // Free the image
@@ -238,6 +142,30 @@ void QuitApp(){
 
 	Main.quit();
 }
+
+
+bool onMousePress(Event event, Widget widget)
+{
+	bool value = false;
+	
+	if(event.type == EventType.BUTTON_PRESS)
+	{
+		GdkEventButton* mouseEvent = event.button;
+		value = true;
+
+		// Create a new command
+		auto command = new SurfaceOperation(imgSurface,cast(int)mouseEvent.x,cast(int)mouseEvent.y);
+		// Append to the end of our queue
+		CommandQueue ~= command;
+		// Execute the last command
+		CommandQueue[$-1].Execute();
+
+		writeln("Commands in Queue: ", CommandQueue.length);
+	}
+
+	return(value);
+}
+
 
 void main(string[] args)
 {
@@ -275,6 +203,7 @@ void main(string[] args)
     // We use a delagate, and observe this time that we are
     // using 'MenuItem m' as our parameter because that is the type.
     menuNew.addOnActivate(delegate void (MenuItem m){writeln("pressed new");}); 
+    menuExit.addOnActivate(delegate void (MenuItem m){writeln("pressed exit");}); 
 
     // Append menu items to our menu
     menu1.append(menuNew);
@@ -288,10 +217,10 @@ void main(string[] args)
 	// We'll now create a 'button' to add to our aplication.
 	Button myButton1 = new Button("Button1 Text");
 	Button myButton2 = new Button("Button2 Text");
-	Button myButton3 = new Button("Button3 Text");
+//	Button myButton3 = new Button("Button3 Text");
 
     Layout myLayout = new Layout(null,null);
-    myLayout.put(myButton3,0,0);
+//    myLayout.put(myButton3,0,167);
 
     const int localPadding= 2;
     //              button    expand fill padding
@@ -300,19 +229,19 @@ void main(string[] args)
     myBox.packStart(myLayout,true,true,localPadding);
 
 	// Action for when we click a button
-//	myButton1.addOnClicked(delegate void(Button b) {
-//							writeln("myButtonClicked");
-//						});
-
+	myButton1.addOnClicked(delegate void(Button b) { writeln("myButton1Clicked");  });
+	myButton2.addOnClicked(delegate void(Button b) { writeln("myButton1Clicked");  });
 	// Action for when mouse is released
-//	myButton1.addOnReleased(delegate void(Button b){
-//							writeln("myButtonReleased");
-//						});
+	myButton1.addOnReleased(delegate void(Button b){ writeln("myButton2Released"); });
+	myButton2.addOnReleased(delegate void(Button b){ writeln("myButton2Released"); });
  
     // Create a new drawing area
     auto gtkDrawingArea = new DrawingArea;
     gtkDrawingArea.setSizeRequest(640,480);
     myBox.packStart(gtkDrawingArea,true,true,localPadding);
+	gtkDrawingArea.addOnButtonPress(delegate bool (Event e,Widget widget){
+		return onMousePress(e,widget);
+	});
 
     // Add to our window the box
     // as a child widget
@@ -326,17 +255,17 @@ void main(string[] args)
 	// Show our window
 	myWindow.showAll();
 
-    cast(gulong)gdk_quartz_window_get_nsview(gtk_widget_get_window((gtkDrawingArea.getWindow())));
+    //cast(gulong)gdk_quartz_window_get_nsview(gtk_widget_get_window((gtkDrawingArea.getWindow())));
 
     // Useful information for SDL within a GTK window
     // https://stackoverflow.com/questions/47284284/how-to-render-sdl2-texture-into-gtk3-window
     //auto gdk_window = gtk_widget_get_window(GTK_WIDGET(myWindow));
     //auto window_id = cast(void*)cast(int*)GDK_WINDOW_XID(gtkDrawingArea);
-    gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
+//    gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
     gdkWindowForSDL = gtkDrawingArea.getWindow(); 
     gdkWindowXID = gdkWindowForSDL.getXid();
 
-    writeln(typeid(gdkWindowForSDL));
+    writeln("gdkWindowForSDL",typeid(gdkWindowForSDL));
 
     // Creating a new idle event will fire whenever there is not anything
     // else to do
