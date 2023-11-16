@@ -19,7 +19,7 @@ void main(string[] args)
 	// Initialize GTK
 	Main.init(args);
 	// Setup our window
-	MainWindow myWindow = new MainWindow("Tutorial 02");
+	MainWindow myWindow = new MainWindow("Tutorial 05");
 	// Position our window
 	myWindow.setDefaultSize(640,480);
 	int w,h;

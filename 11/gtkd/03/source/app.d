@@ -19,7 +19,7 @@ void main(string[] args)
 	// Initialize GTK
 	Main.init(args);
 	// Setup our window
-	MainWindow myWindow = new MainWindow("Tutorial 02");
+	MainWindow myWindow = new MainWindow("Tutorial 03");
 	// Now we are going to force our window to a specific size.
    	// NOTE: You can use 'setSizeRequest(width,height)' to 
 	//       request a size, but generally I just force the size.	
