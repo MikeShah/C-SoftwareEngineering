@@ -15,7 +15,7 @@ jobs:
     # that are hosted on github. You can create your own as well, or setup a 'container'
     # using a tool like docker if you like. For now, I am going to show you the ubuntu setup.
     # Available environments are here: https://github.com/actions/virtual-environments
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # These are the steps that will be run every time that we run our script, one will follow
     # the other.
     # You can pretend you would be manually be typing these out in the terminal everytime you did
