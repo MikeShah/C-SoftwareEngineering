@@ -1,10 +1,5 @@
 /// Run with: 'dub'
 
-// Import the GUI
-import gui;
-import std.concurrency: spawn;
-
-
 // Import D standard libraries
 import std.stdio;
 import std.string;
@@ -16,10 +11,14 @@ import loader = bindbc.loader.sharedlib;
 // global variable for sdl;
 const SDLSupport ret;
 
+
+
 /// At the module level we perform any initialization before our program
 /// executes. Effectively, what I want to do here is make sure that the SDL
 /// library successfully initializes.
 shared static this(){
+
+
     // Load the SDL libraries from bindbc-sdl
 	// on the appropriate operating system
     version(Windows){
@@ -27,6 +26,8 @@ shared static this(){
 		ret = loadSDL("SDL2.dll");
 	}
     version(OSX){
+        pragma(msg,"Detected MAC at compile-time");
+        pragma(msg,"If you are running this on Mac, you need to run in XQuartz or an x11 enabled terminal");
         writeln("Searching for SDL on Mac");
         ret = loadSDL();
     }
@@ -125,12 +126,8 @@ class SurfaceOperation : Command{
 
 
 // Entry point to program
-void main(string[] args)
+void RunSDL(immutable string[] args)
 {
-
-	// Spawn our GUI Window
-	immutable string[] args2=args.dup;
-	spawn(&RunGUI,args2);
 
     // Create an SDL window
     SDL_Window* window= SDL_CreateWindow("D SDL Painting",
