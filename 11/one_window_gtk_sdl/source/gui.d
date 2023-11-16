@@ -26,6 +26,9 @@ import gdk.X11;
 
 import glib.Idle;
 
+// For Mac drawing
+import cairo.Context;
+
 // Import D standard libraries
 import std.stdio;
 import std.string;
@@ -42,6 +45,8 @@ uint            gdkWindowXID;
 Command[]       CommandQueue;
 SDL_Surface*    imgSurface= null;
 bool            drawing = false;
+double          gxPos,gyPos;
+Context         gCairoContext;
 
 // global variable for sdl;
 const SDLSupport ret;
@@ -156,6 +161,7 @@ class SurfaceOperation : Command{
 
 // Handle mouse presses
 bool onMousePressed(Event event, Widget widget){
+    writeln("onMousePressed",gxPos,",",gyPos);
     bool result = false;
     if(event.type == EventType.BUTTON_PRESS){
         // Set drawing to true so we are in a draw state
@@ -164,11 +170,10 @@ bool onMousePressed(Event event, Widget widget){
 
     if(event.type == EventType.MOTION_NOTIFY && drawing==true){
         // Retrieve coordinates of where event happened
-        double xPos,yPos;
-        event.getRootCoords(xPos,yPos);
-        writeln("(rootCoords) mouse pressed:",xPos,yPos);
-        event.getCoords(xPos,yPos);
-        writeln("(relativeCoords) mouse pressed:",xPos,yPos);
+        event.getRootCoords(gxPos,gyPos);
+        writeln("(rootCoords) mouse pressed:",gxPos,gyPos);
+        event.getCoords(gxPos,gyPos);
+        writeln("(relativeCoords) mouse pressed:",gxPos,gyPos);
     }
 
     return result;
@@ -176,36 +181,41 @@ bool onMousePressed(Event event, Widget widget){
 
 // Handle mouse motion after moving brush
 bool onMouseMoved(Event event, Widget widget){
+    writeln("onMouseMoved");
     bool result=false;
     
     if(event.type == EventType.MOTION_NOTIFY && drawing==true){
         // Retrieve coordinates of where event happened
-        double xPos,yPos;
-        event.getCoords(xPos,yPos);
+        event.getCoords(gxPos,gyPos);
+        writeln("onMouseMoved",gxPos,",",gyPos);
 
-        // Loop through and update specific pixels
-        // NOTE: No bounds checking performed --
-        //       think about how you might fix this :)
-        int brushSize=4;
-        for(int w=-brushSize; w < brushSize; w++){
-            for(int h=-brushSize; h < brushSize; h++){
-                // Create a new command
-                auto command = new SurfaceOperation(imgSurface,cast(uint)(xPos+w),cast(uint)(yPos+h));
-                // Append to the end of our queue
-                CommandQueue ~= command;
-                // Execute the last command
-                CommandQueue[$-1].Execute();
+        version(linux){
+            // Loop through and update specific pixels
+            // NOTE: No bounds checking performed --
+            //       think about how you might fix this :)
+            int brushSize=4;
+            for(int w=-brushSize; w < brushSize; w++){
+                for(int h=-brushSize; h < brushSize; h++){
+                    // Create a new command
+                    auto command = new SurfaceOperation(imgSurface,cast(uint)(gxPos+w),cast(uint)(gyPos+h));
+                    // Append to the end of our queue
+                    CommandQueue ~= command;
+                    // Execute the last command
+                    CommandQueue[$-1].Execute();
+                }
             }
         }
-
         result = true;
+
     }
 
     return result;
 }
 
+
 // Handle mouse release events
 bool onMouseReleased(Event event, Widget widget){
+    writeln("onMouseReleased",gxPos,",",gyPos);
     bool result=false;
 
     if(event.type == EventType.BUTTON_RELEASE){
@@ -358,13 +368,32 @@ void main(string[] args)
 
     // Useful information for SDL within a GTK window
     // https://stackoverflow.com/questions/47284284/how-to-render-sdl2-texture-into-gtk3-window
-    gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
-    gdkWindowForSDL = gtkDrawingArea.getWindow(); 
-    gdkWindowXID = gdkWindowForSDL.getXid();
- 
-    // Creating a new idle event will fire whenever there is not anything
-    // else to do -- effectively this is where we will draw in SDL
-    auto idle = new Idle(delegate bool(){ return RunSDL();});
+    version(linux){
+        gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
+        gdkWindowForSDL = gtkDrawingArea.getWindow(); 
+        gdkWindowXID = gdkWindowForSDL.getXid();
+        // Creating a new idle event will fire whenever there is not anything
+        // else to do -- effectively this is where we will draw in SDL
+        auto idle = new Idle(delegate bool(){ return RunSDL();});
+    } 
+    version(OSX){
+
+        gtkDrawingArea.realize(); // May not be necessary, but forces component to be built first
+        gdkWindowForSDL = gtkDrawingArea.getWindow(); 
+        
+        gtkDrawingArea.addOnDraw(delegate bool(Scoped!Context context, Widget w){
+            writeln("Drawing with cairo on mac");
+            gCairoContext = context;
+            writeln("Trying this:",gxPos,",",gyPos);
+            gCairoContext.setLineWidth(3);
+            gCairoContext.moveTo(gxPos,30);
+            gCairoContext.lineTo(100,75);
+            gCairoContext.stroke(); 
+            return true;
+        });
+            
+    }
+
 
     // Handle events on our main window
     // Essentially hook up a bunch of functions to handle input/output
