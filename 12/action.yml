@@ -19,7 +19,7 @@ Provided below are a list of curated resources to help you complete the tasks be
 
 [Github actions](https://github.com/features/actions) are githubs built-in way of providing a continuous integration testing system for your project. Other technologies like Jenkins and Travis exist, though having all of the features located in one spot will make it easy for us to get started. Github actions are also very powerful in what you can do. Today you are going to setup in [finalproject/.github/workflows/MainWorkflow.yml](finalproject/.github/workflows/MainWorkflow.yml) your first workflow that will execute tests every time you push code. In this way, github actions will help ensure that code that you are submitting to your repository for example, is code that actually compiles and passes all of the tests. you have in the project.
 
-Provided below is a working C/C++ continuous integration workflow file that will run as a 'github' action everytime you push your code to the master branch. You may implement or modify this for your needs.
+Provided below is a working D continuous integration workflow file that will run as a 'github' action everytime you push your code to the master branch. You may implement or modify this for your needs.
 
 ```bash
 # A simple DLang Continuous Integration file
@@ -39,7 +39,7 @@ jobs:
     # that are hosted on github. You can create your own as well, or setup a 'container'
     # using a tool like docker if you like. For now, I am going to show you the ubuntu setup.
     # Available environments are here: https://github.com/actions/virtual-environments
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # These are the steps that will be run every time that we run our script, one will follow
     # the other.
     # You can pretend you would be manually be typing these out in the terminal everytime you did
@@ -56,7 +56,7 @@ jobs:
       - name: Install sdl dependency
         run: sudo apt-get install libsdl2-dev
       - name: build project code
-        run: cd ./labs/ci && dub run
+        run: cd ./labs/ci && dub test 
       # These next two steps need a little bit more explaining, because as we are finding out
       # testing graphics applications is really hard!
       # You learned this when you wrote your GUI applications tests earlier.
